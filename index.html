@@ -15,43 +15,68 @@
     <button onclick="submitData()">提交</button>
 
     <script>
-        const LIFF_ID = "2006942589-x003EYVl";  // **你的 LIFF ID**
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxFM2GfFhDagD9fFItefcKm9Lby69ffLlcFeGugWN5G1UB3j3V9s5Pvk01-u3jPm9r9/exec";  // **請填入你的 GAS 部署網址**
+        const LIFF_ID = "2006942589-x003EYVl";  
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzPBauGxyf8JcqIupljDsCRPxBntMSP1ewAj1j2TnR-m7kqyS8O_CNYnN50lEKXyJk/exec";  
 
         async function initializeLiff() {
-            await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-                return;
+            try {
+                await liff.init({ liffId: LIFF_ID });
+
+                if (!liff.isLoggedIn()) {
+                    console.log("LIFF 未登入，進行登入...");
+                    liff.login();
+                    return;
+                }
+
+                const profile = await liff.getProfile();
+                console.log("LIFF Profile:", profile);
+                document.getElementById("userId").innerText = profile.userId;
+            } catch (error) {
+                console.error("LIFF 初始化錯誤:", error);
+                alert("LIFF 載入失敗，請稍後再試！");
             }
-            const profile = await liff.getProfile();
-            document.getElementById("userId").innerText = profile.userId;
         }
 
         async function submitData() {
+            console.log("👉 提交按鈕被點擊！");
+
             const userId = document.getElementById("userId").innerText;
             const email = document.getElementById("email").value;
             const nickname = document.getElementById("nickname").value;
             const points = document.getElementById("points").value;
 
-            const response = await fetch(GAS_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    action: "updateUserData",
-                    userId: userId,
-                    email: email,
-                    nickname: nickname,
-                    points: points
-                })
-            });
+            if (!userId || !email || !nickname) {
+                alert("⚠️ 請填寫完整資料！");
+                return;
+            }
 
-            const result = await response.json();
-            if (result.status === "updated") {
-                alert("資料更新成功！");
-                liff.closeWindow();
-            } else {
-                alert("更新失敗，請稍後再試！");
+            try {
+                console.log("📡 正在發送資料到 GAS:", { userId, email, nickname, points });
+
+                const response = await fetch(GAS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "updateUserData",
+                        userId: userId,
+                        email: email,
+                        nickname: nickname,
+                        points: points
+                    })
+                });
+
+                const result = await response.json();
+                console.log("📩 GAS 回應:", result);
+
+                if (result.status === "updated") {
+                    alert("✅ 資料更新成功！");
+                    liff.closeWindow();
+                } else {
+                    alert("⚠️ 更新失敗：" + result.message);
+                }
+            } catch (error) {
+                console.error("❌ 提交錯誤:", error);
+                alert("❌ 提交資料時發生錯誤，請稍後再試！");
             }
         }
 
