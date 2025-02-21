@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員資料填寫</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <h2>填寫會員資料</h2>
+    <p>LINE ID: <span id="userId"></span></p>
+    <label>電子信箱: <input type="email" id="email"></label><br>
+    <label>暱稱: <input type="text" id="nickname"></label><br>
+    <label>積分: <input type="number" id="points" value="0"></label><br>
+    <button onclick="submitData()">提交</button>
+
+    <script>
+        const LIFF_ID = "2006942589-x003EYVl";  // **你的 LIFF ID**
+        const GAS_URL = "你的 GAS Webhook URL";  // **請填入你的 GAS 部署網址**
+
+        async function initializeLiff() {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+                return;
+            }
+            const profile = await liff.getProfile();
+            document.getElementById("userId").innerText = profile.userId;
+        }
+
+        async function submitData() {
+            const userId = document.getElementById("userId").innerText;
+            const email = document.getElementById("email").value;
+            const nickname = document.getElementById("nickname").value;
+            const points = document.getElementById("points").value;
+
+            const response = await fetch(GAS_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "updateUserData",
+                    userId: userId,
+                    email: email,
+                    nickname: nickname,
+                    points: points
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === "updated") {
+                alert("資料更新成功！");
+                liff.closeWindow();
+            } else {
+                alert("更新失敗，請稍後再試！");
+            }
+        }
+
+        initializeLiff();
+    </script>
+</body>
+</html>
