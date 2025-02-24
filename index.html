@@ -46,7 +46,9 @@
                         latitude = position.coords.latitude;
                         longitude = position.coords.longitude;
                         console.log("✅ GPS 獲取成功:", latitude, longitude);
-                        initMap(latitude, longitude);
+                        setTimeout(() => {
+                            initMap(latitude, longitude);
+                        }, 500);
                     },
                     error => {
                         console.error("❌ GPS 獲取失敗:", error);
@@ -83,6 +85,12 @@
                 map: map,
                 title: "您的位置"
             });
+
+            setTimeout(() => {
+                google.maps.event.trigger(map, "resize");
+                map.setCenter({ lat, lng });
+                console.log("✅ 地圖已強制重新渲染");
+            }, 500);
 
             console.log("✅ 地圖初始化成功");
         }
