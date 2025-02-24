@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LINE GPS 打卡</title>
     <script src="https://static.line-scdn.net/liff/edge/versions/2.19.0/sdk.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
         #map { width: 100%; height: 400px; margin-top: 20px; background-color: #ccc; }
@@ -75,24 +76,17 @@
                 return;
             }
 
-            const map = new google.maps.Map(mapElement, {
-                center: { lat, lng },
-                zoom: 15
-            });
+            const map = L.map('map').setView([lat, lng], 15);
 
-            new google.maps.Marker({
-                position: { lat, lng },
-                map: map,
-                title: "您的位置"
-            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap 貢獻者'
+            }).addTo(map);
 
-            setTimeout(() => {
-                google.maps.event.trigger(map, "resize");
-                map.setCenter({ lat, lng });
-                console.log("✅ 地圖已強制重新渲染");
-            }, 500);
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup("您的位置")
+                .openPopup();
 
-            console.log("✅ 地圖初始化成功");
+            console.log("✅ OpenStreetMap 地圖初始化成功");
         }
 
         document.getElementById("workCheckin").addEventListener("click", function() {
