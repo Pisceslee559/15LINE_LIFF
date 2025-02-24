@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -24,26 +25,89 @@
         document.addEventListener("DOMContentLoaded", function() {
             liff.init({ liffId: "2006957303-QVNd9gza" })
                 .then(() => {
+                    console.log("✅ LIFF 初始化成功");
                     if (!liff.isLoggedIn()) {
+                        console.log("🔹 用戶未登入，執行登入...");
                         liff.login();
                     } else {
+                        console.log("🔹 用戶已登入，開始獲取 GPS");
                         getLocation();
                     }
                 })
-                .catch(err => console.error("LIFF 初始化失敗", err));
+                .catch(err => console.error("❌ LIFF 初始化失敗", err));
         });
 
         let latitude, longitude;
 
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    latitude = position.coords.latitude;
-                    longitude = position.coords.longitude;
-                    initMap(latitude, longitude);
-                }, error => {
-                    alert("無法獲取位置，請確保允許存取 GPS。");
-                    console.error(error);
-                });
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        latitude = position.coords.latitude;
+                        longitude = position.coords.longitude;
+                        console.log("✅ GPS 獲取成功:", latitude, longitude);
+                        initMap(latitude, longitude);
+                    },
+                    error => {
+                        console.error("❌ GPS 獲取失敗:", error);
+                        alert("無法獲取位置，請確保允許存取 GPS 並開啟定位功能。");
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
             } else {
-                alert("瀏覽器不支援 GPS 位置。");
+                alert("❌ 瀏覽器不支援 GPS 位置。");
+            }
+        }
+
+        function initMap(lat = 25.033964, lng = 121.564468) {
+            if (!lat || !lng) {
+                console.error("❌ 無法初始化地圖，經緯度無效！");
+                return;
+            }
+
+            console.log("🗺️ 初始化地圖:", lat, lng);
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat, lng },
+                zoom: 15
+            });
+
+            new google.maps.Marker({
+                position: { lat, lng },
+                map: map,
+                title: "您的位置"
+            });
+        }
+
+        document.getElementById("workCheckin").addEventListener("click", function() {
+            sendCheckin("上班");
+        });
+
+        document.getElementById("workCheckout").addEventListener("click", function() {
+            sendCheckin("下班");
+        });
+
+        function sendCheckin(status) {
+            if (!latitude || !longitude) {
+                alert("⚠️ GPS 位置尚未取得，請稍候再試！");
+                return;
+            }
+
+            let gpsData = `打卡|${status}|${latitude},${longitude}`;
+            console.log("🔹 傳送打卡資料:", gpsData); // ✅ 記錄發送的 GPS 資訊
+
+            liff.sendMessages([
+                {
+                    type: "text",
+                    text: gpsData
+                }
+            ]).then(() => {
+                alert(`${status} 打卡成功！`);
+                liff.closeWindow();
+            }).catch(err => {
+                console.error("❌ 打卡失敗", err);
+                alert("⚠️ 打卡失敗，請重試！");
+            });
+        }
+    </script>
+</body>
+</html>
