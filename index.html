@@ -3,84 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會員資料填寫</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <title>LINE 打卡</title>
+    <script src="https://static.line-scdn.net/liff/edge/versions/2.19.0/sdk.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=你的GoogleMapAPIKey&callback=initMap"></script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #map { width: 100%; height: 300px; margin-top: 20px; background-color: #ccc; }
+        #checkinBtn { padding: 10px 20px; font-size: 18px; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <h2>填寫會員資料</h2>
-    <p>LINE ID: <span id="userId"></span></p>
-    <label>電子信箱: <input type="email" id="email"></label><br>
-    <label>暱稱: <input type="text" id="nickname"></label><br>
-    <label>積分: <input type="number" id="points" value="0"></label><br>
-    <button onclick="submitData()">提交</button>
+    <h2>LINE GPS 打卡</h2>
+    <div id="map"></div>
+    <button id="checkinBtn">打卡</button>
 
     <script>
-        const LIFF_ID = "2006942589-x003EYVl";  
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxzcY3-Omu5JLJozHFvgmMiHZob4S-MgOEerNEPglpSNBvlbdCowhl_LPJh-Z1ocCsn/exec";  
+        document.addEventListener("DOMContentLoaded", function() {
+            liff.init({ liffId: "你的LIFF-ID" })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        getLocation();
+                    }
+                })
+                .catch(err => console.error("LIFF 初始化失敗", err));
+        });
 
-        async function initializeLiff() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
+        let latitude, longitude;
 
-                if (!liff.isLoggedIn()) {
-                    console.log("LIFF 未登入，進行登入...");
-                    liff.login();
-                    return;
-                }
-
-                const profile = await liff.getProfile();
-                console.log("LIFF Profile:", profile);
-                document.getElementById("userId").innerText = profile.userId;
-            } catch (error) {
-                console.error("LIFF 初始化錯誤:", error);
-                alert("LIFF 載入失敗，請稍後再試！");
-            }
-        }
-
-        async function submitData() {
-            console.log("👉 提交按鈕被點擊！");
-
-            const userId = document.getElementById("userId").innerText;
-            const email = document.getElementById("email").value;
-            const nickname = document.getElementById("nickname").value;
-            const points = document.getElementById("points").value;
-
-            if (!userId || !email || !nickname) {
-                alert("⚠️ 請填寫完整資料！");
-                return;
-            }
-
-            try {
-                console.log("📡 正在發送資料到 GAS:", { userId, email, nickname, points });
-
-                const response = await fetch(GAS_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "updateUserData",
-                        userId: userId,
-                        email: email,
-                        nickname: nickname,
-                        points: points
-                    })
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    latitude = position.coords.latitude;
+                    longitude = position.coords.longitude;
+                    initMap(latitude, longitude);
+                }, error => {
+                    alert("無法獲取位置，請確保允許存取 GPS。");
+                    console.error(error);
                 });
-
-                const result = await response.json();
-                console.log("📩 GAS 回應:", result);
-
-                if (result.status === "updated") {
-                    alert("✅ 資料更新成功！");
-                    liff.closeWindow();
-                } else {
-                    alert("⚠️ 更新失敗：" + result.message);
-                }
-            } catch (error) {
-                console.error("❌ 提交錯誤:", error);
-                alert("❌ 提交資料時發生錯誤，請稍後再試！");
+            } else {
+                alert("瀏覽器不支援 GPS 位置。");
             }
         }
 
-        initializeLiff();
+        function initMap(lat = 25.033964, lng = 121.564468) {
+            console.log("初始化地圖", lat, lng);
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat, lng },
+                zoom: 15
+            });
+            new google.maps.Marker({
+                position: { lat, lng },
+                map: map,
+                title: "你的位置"
+            });
+        }
+
+        document.getElementById("checkinBtn").addEventListener("click", function() {
+            const data = {
+                latitude,
+                longitude,
+                timestamp: new Date().toISOString()
+            };
+            
+            liff.sendMessages([
+                {
+                    type: "text",
+                    text: `打卡成功！位置：(${latitude}, ${longitude})`
+                }
+            ]).then(() => {
+                alert("打卡成功！");
+                liff.closeWindow();
+            }).catch(err => {
+                alert("打卡失敗");
+                console.error(err);
+            });
+        });
     </script>
 </body>
 </html>
