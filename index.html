@@ -1,85 +1,49 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINE 打卡</title>
-    <script src="https://static.line-scdn.net/liff/edge/versions/2.19.0/sdk.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=你的GoogleMapAPIKey&callback=initMap"></script>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        #map { width: 100%; height: 300px; margin-top: 20px; background-color: #ccc; }
-        #checkinBtn { padding: 10px 20px; font-size: 18px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h2>LINE GPS 打卡</h2>
-    <div id="map"></div>
-    <button id="checkinBtn">打卡</button>
+<button id="workCheckin">上班打卡</button>
+<button id="workCheckout">下班打卡</button>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            liff.init({ liffId: "2006957303-QVNd9gza" })
-                .then(() => {
-                    if (!liff.isLoggedIn()) {
-                        liff.login();
-                    } else {
-                        getLocation();
-                    }
-                })
-                .catch(err => console.error("LIFF 初始化失敗", err));
-        });
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const punchType = urlParams.get("type"); // work 或 off
+    if (punchType) {
+        document.getElementById(punchType === "work" ? "workCheckin" : "workCheckout").click();
+    }
+});
 
-        let latitude, longitude;
+document.getElementById("workCheckin").addEventListener("click", function() {
+    sendCheckin("上班");
+});
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    latitude = position.coords.latitude;
-                    longitude = position.coords.longitude;
-                    initMap(latitude, longitude);
-                }, error => {
-                    alert("無法獲取位置，請確保允許存取 GPS。");
-                    console.error(error);
-                });
-            } else {
-                alert("瀏覽器不支援 GPS 位置。");
-            }
-        }
+document.getElementById("workCheckout").addEventListener("click", function() {
+    sendCheckin("下班");
+});
 
-        function initMap(lat = 25.033964, lng = 121.564468) {
-            console.log("初始化地圖", lat, lng);
-            const map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat, lng },
-                zoom: 15
-            });
-            new google.maps.Marker({
-                position: { lat, lng },
-                map: map,
-                title: "你的位置"
-            });
-        }
+function sendCheckin(status) {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            let latitude = position.coords.latitude;
+            let longitude = position.coords.longitude;
+            let gpsData = `打卡|${status}|${latitude},${longitude}`;
 
-        document.getElementById("checkinBtn").addEventListener("click", function() {
-            const data = {
-                latitude,
-                longitude,
-                timestamp: new Date().toISOString()
-            };
-            
             liff.sendMessages([
                 {
                     type: "text",
-                    text: `打卡成功！位置：(${latitude}, ${longitude})`
+                    text: gpsData
                 }
             ]).then(() => {
-                alert("打卡成功！");
+                alert(`${status} 打卡成功！`);
                 liff.closeWindow();
             }).catch(err => {
-                alert("打卡失敗");
-                console.error(err);
+                console.error("打卡失敗", err);
+                alert("打卡失敗，請重試！");
             });
+
+        }, error => {
+            alert("無法獲取 GPS 位置，請開啟 GPS！");
+            console.error(error);
         });
-    </script>
-</body>
-</html>
+    } else {
+        alert("您的裝置不支援 GPS！");
+    }
+}
+</script>
