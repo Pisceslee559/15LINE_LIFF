@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LINE GPS 打卡</title>
     <script src="https://static.line-scdn.net/liff/edge/versions/2.19.0/sdk.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=你的GoogleMapAPIKey&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initMap"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
-        #map { width: 100%; height: 300px; margin-top: 20px; background-color: #ccc; }
+        #map { width: 100%; height: 400px; margin-top: 20px; background-color: #ccc; }
         #checkinButtons { margin-top: 20px; }
         .checkinBtn { padding: 10px 20px; font-size: 18px; cursor: pointer; margin: 5px; }
     </style>
@@ -50,7 +50,7 @@
                     },
                     error => {
                         console.error("❌ GPS 獲取失敗:", error);
-                        alert("無法獲取位置，請確保允許存取 GPS 並開啟定位功能。");
+                        alert("⚠️ 無法獲取位置，請確保 GPS 服務已開啟並允許存取位置。");
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
@@ -59,14 +59,21 @@
             }
         }
 
-        function initMap(lat = 25.033964, lng = 121.564468) {
+        function initMap(lat, lng) {
             if (!lat || !lng) {
                 console.error("❌ 無法初始化地圖，經緯度無效！");
                 return;
             }
 
             console.log("🗺️ 初始化地圖:", lat, lng);
-            const map = new google.maps.Map(document.getElementById("map"), {
+            const mapElement = document.getElementById("map");
+
+            if (!mapElement) {
+                console.error("❌ 找不到地圖元素 #map");
+                return;
+            }
+
+            const map = new google.maps.Map(mapElement, {
                 center: { lat, lng },
                 zoom: 15
             });
@@ -76,6 +83,8 @@
                 map: map,
                 title: "您的位置"
             });
+
+            console.log("✅ 地圖初始化成功");
         }
 
         document.getElementById("workCheckin").addEventListener("click", function() {
@@ -93,7 +102,7 @@
             }
 
             let gpsData = `打卡|${status}|${latitude},${longitude}`;
-            console.log("🔹 傳送打卡資料:", gpsData); // ✅ 記錄發送的 GPS 資訊
+            console.log("🔹 傳送打卡資料:", gpsData); 
 
             liff.sendMessages([
                 {
@@ -101,6 +110,7 @@
                     text: gpsData
                 }
             ]).then(() => {
+                console.log("✅ 打卡訊息成功傳送至 LINE Bot");
                 alert(`${status} 打卡成功！`);
                 liff.closeWindow();
             }).catch(err => {
