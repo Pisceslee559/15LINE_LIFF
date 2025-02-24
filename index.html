@@ -96,30 +96,29 @@
         });
 
         function sendCheckin(status) {
-    if (!latitude || !longitude) {
-        alert("⚠️ GPS 位置尚未取得，請稍候再試！");
-        console.error("❌ 無法打卡，未取得 GPS");
-        return;
-    }
+            if (!latitude || !longitude) {
+                alert("⚠️ GPS 位置尚未取得，請稍候再試！");
+                console.error("❌ 無法打卡，未取得 GPS");
+                return;
+            }
 
-    let gpsData = `打卡|${status}|${latitude},${longitude}`;
-    console.log("🔹 準備傳送打卡資料:", gpsData);
+            let gpsData = `打卡|${status}|${latitude},${longitude}`;
+            console.log("🔹 準備傳送打卡資料:", gpsData);
 
-    liff.sendMessages([
-        {
-            type: "text",
-            text: gpsData
+            liff.sendMessages([
+                {
+                    type: "text",
+                    text: gpsData
+                }
+            ]).then(() => {
+                console.log("✅ 打卡訊息成功傳送至 LINE Bot");
+                alert(`${status} 打卡成功！`);
+                liff.closeWindow();
+            }).catch(err => {
+                console.error("❌ 打卡失敗，錯誤訊息:", err);
+                alert("⚠️ 打卡失敗，請重試！");
+            });
         }
-    ]).then(() => {
-        console.log("✅ 打卡訊息成功傳送至 LINE Bot");
-        alert(`${status} 打卡成功！`);
-        liff.closeWindow();
-    }).catch(err => {
-        console.error("❌ 打卡失敗，錯誤訊息:", err);
-        alert("⚠️ 打卡失敗，請重試！");
-    });
-}
-
     </script>
 </body>
 </html>
