@@ -26,7 +26,7 @@
         const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";  // Google Apps Script Web API
 
         document.addEventListener("DOMContentLoaded", function() {
-            liff.init({ liffId: "YOUR_LIFF_ID" })
+            liff.init({ liffId: "2006937784-P4mr1RLD" })
                 .then(() => {
                     console.log("✅ LIFF 初始化成功");
                     if (!liff.isLoggedIn()) {
@@ -94,4 +94,67 @@
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap 貢獻者'
-            }).
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup("您的位置")
+                .openPopup();
+
+            console.log("✅ OpenStreetMap 地圖初始化成功");
+        }
+
+        document.getElementById("workCheckin").addEventListener("click", function() {
+            sendCheckin("上班");
+        });
+
+        document.getElementById("workCheckout").addEventListener("click", function() {
+            sendCheckin("下班");
+        });
+
+        async function sendCheckin(status) {
+            if (!latitude || !longitude) {
+                alert("⚠️ GPS 位置尚未取得，請稍候再試！");
+                console.error("❌ 無法打卡，未取得 GPS");
+                return;
+            }
+
+            try {
+                const profile = await liff.getProfile();
+                userId = profile.userId;
+                displayName = profile.displayName;
+            } catch (error) {
+                console.error("❌ 無法獲取用戶資訊:", error);
+                alert("⚠️ 無法取得用戶資訊，請重新登入！");
+                return;
+            }
+
+            let gpsData = {
+                userId: userId,
+                name: displayName,
+                latitude: latitude,
+                longitude: longitude,
+                timestamp: new Date().toLocaleString(),
+                status: status
+            };
+
+            console.log("🔹 傳送打卡資料至試算表:", gpsData);
+
+            // 上傳到 Google 試算表
+            fetch(scriptURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(gpsData)
+            }).then(response => response.json())
+              .then(data => {
+                console.log("✅ 試算表回應:", data);
+                alert(`${status} 打卡成功！`);
+                liff.closeWindow();
+              })
+              .catch(err => {
+                console.error("❌ 上傳打卡資料失敗:", err);
+                alert("⚠️ 打卡失敗，請稍後重試！");
+              });
+        }
+    </script>
+</body>
+</html>
