@@ -8,11 +8,12 @@
 </head>
 <body>
     <h1>測試 LINE Bot 互動</h1>
+    <input type="text" id="messageInput" placeholder="輸入訊息">
     <button onclick="sendMessage()">發送訊息</button>
 
     <script>
         const LIFF_ID = "2006937784-P4mr1RLD";  // 替換成你的 LIFF ID
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyRWqFsuuhjlLR3dXwhS6124zuqADG4OHWAgU6mOBga7_RNirRb1JZ-C4RQ7oBLCwo/exec";  // Google Apps Script Web App URL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxuN5z9PqvgOEVme_lW3liwvcgBKlp8qSwMEpHq00J0Z9pzr32VtM615iWII5FdKME/exec";  // 替換成你的 GAS Web App URL
 
         async function initLiff() {
             try {
@@ -35,9 +36,8 @@
 
             const profile = await liff.getProfile();
             const userId = profile.userId;  // 取得用戶 ID
-            const message = "這是從 HTML 頁面發送的訊息 🎉";
+            const message = document.getElementById("messageInput").value || "預設訊息";
 
-            // 透過 Google Apps Script 發送訊息
             fetch(GAS_URL, {
                 method: "POST",
                 headers: {
@@ -51,11 +51,11 @@
             .then(response => response.text())
             .then(data => {
                 console.log("伺服器回應:", data);
-                alert("訊息已發送！");
+                alert("訊息已發送！請查看你的 LINE");
             })
             .catch(error => {
                 console.error("錯誤:", error);
-                alert("發送失敗！");
+                alert("發送失敗！請查看 Console");
             });
         }
 
