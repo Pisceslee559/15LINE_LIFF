@@ -140,21 +140,31 @@
             console.log("🔹 傳送打卡資料至試算表:", gpsData);
 
             // 上傳到 Google 試算表
-            fetch(scriptURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(gpsData)
-            }).then(response => response.json())
-              .then(data => {
-                console.log("✅ 試算表回應:", data);
-                alert(`${status} 打卡成功！`);
-                liff.closeWindow();
-              })
-              .catch(err => {
-                console.error("❌ 上傳打卡資料失敗:", err);
-                alert("⚠️ 打卡失敗，請稍後重試！");
-              });
-        }
+            fetch("https://script.google.com/macros/s/1JqTx8pYTkOG97j6o3hGynu3Hlda8ipwdEPuhUEMfqkw/exec", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        userId: userId,  // LINE User ID
+        latitude: latitude,  // GPS 緯度
+        longitude: longitude,  // GPS 經度
+        status: status  // "上班" 或 "下班"
+    })
+})
+.then(response => response.json())
+.then(data => {
+    console.log("✅ API 回應:", data);
+    if (data.success) {
+        alert(`✅ 打卡成功！\n${status}`);
+        liff.closeWindow(); // 關閉 LIFF 視窗
+    } else {
+        alert(`⚠️ 打卡失敗: ${data.error}`);
+    }
+})
+.catch(error => {
+    console.error("❌ API 錯誤:", error);
+    alert(`⚠️ 伺服器錯誤: ${error.message}`);
+});
+
     </script>
 </body>
 </html>
