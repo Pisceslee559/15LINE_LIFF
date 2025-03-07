@@ -13,10 +13,20 @@
 
     <script>
         const LIFF_ID = "2006937784-P4mr1RLD";  // 替換成你的 LIFF ID
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxuN5z9PqvgOEVme_lW3liwvcgBKlp8qSwMEpHq00J0Z9pzr32VtM615iWII5FdKME/exec";  // 替換成你的 GAS Web App URL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxuN5z9PqvgOEVme_lW3liwvcgBKlp8qSwMEpHq00J0Z9pzr32VtM615iWII5FdKME/exec";
+
+        window.onload = function() {
+            console.log("頁面載入完成，準備初始化 LIFF");
+            initLiff();
+        };
 
         async function initLiff() {
             try {
+                if (typeof liff === "undefined") {
+                    console.error("LIFF SDK 尚未載入！");
+                    return;
+                }
+
                 await liff.init({ liffId: LIFF_ID });
                 console.log("LIFF 初始化成功");
 
@@ -35,18 +45,20 @@
             }
 
             const profile = await liff.getProfile();
-            const userId = profile.userId;  // 取得用戶 ID
+            console.log("User ID:", profile.userId);
+            console.log("Message:", document.getElementById("messageInput").value);
+
+            const userId = profile.userId;
             const message = document.getElementById("messageInput").value || "預設訊息";
+
+            console.log("發送資料:", { userId: userId, message: message });
 
             fetch(GAS_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    userId: userId,
-                    message: message
-                })
+                body: JSON.stringify({ userId: userId, message: message })
             })
             .then(response => response.text())
             .then(data => {
@@ -58,8 +70,6 @@
                 alert("發送失敗！請查看 Console");
             });
         }
-
-        window.onload = initLiff;
     </script>
 </body>
 </html>
