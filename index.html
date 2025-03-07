@@ -23,57 +23,46 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbw0JKTJiqIVajYWn-MCJtRDx2k2oJcqoZqJkduBcyp2pB9aPInG-tfDYsIS47XiEXw/exec";  // Google Apps Script Web API
+        const scriptURL = "https://script.google.com/macros/s/AKfycbw0JKTJiqIVajYWn-MCJtRDx2k2oJcqoZqJkduBcyp2pB9aPInG-tfDYsIS47XiEXw/exec";
 
-        document.addEventListener("DOMContentLoaded", function() {
-            liff.init({ liffId: "2006937784-P4mr1RLD" })
-                .then(() => {
-                    console.log("✅ LIFF 初始化成功");
-                    if (!liff.isLoggedIn()) {
-                        console.log("🔹 用戶未登入，執行登入...");
-                        liff.login();
-                    } else {
-                        console.log("🔹 用戶已登入，開始獲取 GPS");
-                        checkLocationPermission();
-                    }
-                })
-                .catch(err => console.error("❌ LIFF 初始化失敗", err));
+        document.addEventListener("DOMContentLoaded", async function() {
+            try {
+                await liff.init({ liffId: "2006937784-P4mr1RLD" });
+                console.log("✅ LIFF 初始化成功");
+                if (!liff.isLoggedIn()) {
+                    console.log("🔹 用戶未登入，執行登入...");
+                    liff.login();
+                } else {
+                    console.log("🔹 用戶已登入，開始獲取 GPS");
+                    getLocation();
+                }
+            } catch (err) {
+                console.error("❌ LIFF 初始化失敗", err);
+            }
         });
 
         let latitude, longitude, userId, displayName;
 
-        function checkLocationPermission() {
-            if (!navigator.permissions) {
-                getLocation();
+        async function getLocation() {
+            if (!navigator.geolocation) {
+                alert("❌ 瀏覽器不支援 GPS 位置。");
                 return;
             }
-            navigator.permissions.query({ name: 'geolocation' }).then(permission => {
-                if (permission.state === "granted" || permission.state === "prompt") {
-                    getLocation();
-                } else {
-                    alert("⚠️ 請手動允許 GPS 權限！");
-                }
-            });
-        }
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        latitude = position.coords.latitude;
-                        longitude = position.coords.longitude;
-                        console.log("✅ GPS 獲取成功:", latitude, longitude);
-                        setTimeout(() => initMap(latitude, longitude), 500);
-                    },
-                    error => {
-                        console.error("❌ GPS 獲取失敗:", error);
-                        alert("⚠️ 無法獲取位置，請確保 GPS 服務已開啟並允許存取位置。");
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                );
-            } else {
-                alert("❌ 瀏覽器不支援 GPS 位置。");
-            }
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    latitude = position.coords.latitude;
+                    longitude = position.coords.longitude;
+                    console.log("✅ GPS 取得成功:", latitude, longitude);
+                    alert(`GPS 取得成功！\n緯度: ${latitude}\n經度: ${longitude}`);
+                    initMap(latitude, longitude);
+                },
+                error => {
+                    console.error("❌ GPS 取得失敗:", error);
+                    alert(`⚠️ 無法獲取 GPS：${error.message}`);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
         }
 
         function initMap(lat, lng) {
@@ -139,32 +128,26 @@
 
             console.log("🔹 傳送打卡資料至試算表:", gpsData);
 
-            // 上傳到 Google 試算表
-           fetch("https://script.google.com/macros/s/1JqTx8pYTkOG97j6o3hGynu3Hlda8ipwdEPuhUEMfqkw/exec?origin=https://pisceslee559.github.io", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-        userId: userId,
-        latitude: latitude,
-        longitude: longitude,
-        status: status
-    })
-})
-.then(response => response.json())
-.then(data => {
-    console.log("✅ API 回應:", data);
-    if (data.success) {
-        alert(`✅ 打卡成功！\n${status}`);
-        liff.closeWindow(); // 關閉 LIFF 視窗
-    } else {
-        alert(`⚠️ 打卡失敗: ${data.error}`);
-    }
-})
-.catch(error => {
-    console.error("❌ API 錯誤:", error);
-    alert(`⚠️ 伺服器錯誤: ${error.message}`);
-});
-
+            fetch(scriptURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(gpsData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("✅ API 回應:", data);
+                if (data.success) {
+                    alert(`✅ 打卡成功！\n${status}`);
+                    liff.closeWindow();
+                } else {
+                    alert(`⚠️ 打卡失敗: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error("❌ API 錯誤:", error);
+                alert(`⚠️ 伺服器錯誤: ${error.message}`);
+            });
+        }
     </script>
 </body>
 </html>
