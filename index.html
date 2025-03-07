@@ -23,7 +23,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";  // Google Apps Script Web API
+        const scriptURL = "https://script.google.com/macros/s/AKfycbw0JKTJiqIVajYWn-MCJtRDx2k2oJcqoZqJkduBcyp2pB9aPInG-tfDYsIS47XiEXw/exec";  // Google Apps Script Web API
 
         document.addEventListener("DOMContentLoaded", function() {
             liff.init({ liffId: "2006937784-P4mr1RLD" })
@@ -140,14 +140,14 @@
             console.log("🔹 傳送打卡資料至試算表:", gpsData);
 
             // 上傳到 Google 試算表
-            fetch("https://script.google.com/macros/s/1JqTx8pYTkOG97j6o3hGynu3Hlda8ipwdEPuhUEMfqkw/exec", {
+           fetch("https://script.google.com/macros/s/1JqTx8pYTkOG97j6o3hGynu3Hlda8ipwdEPuhUEMfqkw/exec?origin=https://pisceslee559.github.io", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-        userId: userId,  // LINE User ID
-        latitude: latitude,  // GPS 緯度
-        longitude: longitude,  // GPS 經度
-        status: status  // "上班" 或 "下班"
+        userId: userId,
+        latitude: latitude,
+        longitude: longitude,
+        status: status
     })
 })
 .then(response => response.json())
